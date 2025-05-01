@@ -17,18 +17,18 @@ import httpx
 st.title("🏡 Find a Home")
 
 AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
-ELASTIC_SERVERLESS_CLOUD_ID = os.getenv("ELASTIC_SERVERLESS_CLOUD_ID")
+ELASTIC_SERVERLESS_URL = os.getenv("ELASTIC_SERVERLESS_URL")
 ELASTIC_SERVERLESS_API_KEY = os.getenv("ELASTIC_SERVERLESS_API_KEY")
-GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 GEOCODE_URL = os.getenv("GEOCODE_URL")
+AZURE_MAPS_API_KEY = os.getenv("AZURE_MAPS_API_KEY")
 AZURE_OPENAI_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
 AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION")
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 
 print(AZURE_OPENAI_API_KEY)
-print(ELASTIC_SERVERLESS_CLOUD_ID)
+print(ELASTIC_SERVERLESS_URL)
 print(ELASTIC_SERVERLESS_API_KEY)
-print(GOOGLE_MAPS_API_KEY)
+print(AZURE_MAPS_API_KEY)
 print(AZURE_OPENAI_DEPLOYMENT_NAME)
 print(AZURE_OPENAI_API_VERSION)
 print(AZURE_OPENAI_ENDPOINT)
@@ -38,7 +38,6 @@ INDEX_NAME="properties"
 MAX_RETRIES = 2
 RETRY_DELAY = 2  # seconds between retries
 
-
 try:
     client = AzureOpenAI(
         azure_endpoint=AZURE_OPENAI_ENDPOINT,
@@ -47,7 +46,7 @@ try:
     )
 
     es = Elasticsearch(
-        cloud_id=ELASTIC_SERVERLESS_CLOUD_ID,
+        ELASTIC_SERVERLESS_URL,
         api_key=ELASTIC_SERVERLESS_API_KEY,
         request_timeout=300
     )
@@ -57,19 +56,12 @@ try:
 except:
     pass  # Silently ignore all errors
 
-
-
-
 def setElasticClient():
-  es = Elasticsearch(cloud_id=ELASTIC_SERVERLESS_CLOUD_ID, api_key=ELASTIC_SERVERLESS_API_KEY, request_timeout=300)
+  es = Elasticsearch(ELASTIC_SERVERLESS_URL, api_key=ELASTIC_SERVERLESS_API_KEY, request_timeout=300)
   es.info()
-
-
 
 def setAzureClient():
   client = AzureOpenAI(azure_endpoint=AZURE_OPENAI_ENDPOINT, api_key=AZURE_OPENAI_API_KEY, api_version=AZURE_OPENAI_API_VERSION)
-
-
 
 def find_a_home(content):
 
@@ -456,22 +448,24 @@ def handle_extract_home_search_parameters(args):
 
     return json.dumps(args)
 
-
 def geocode_location(location):
     """
-    Resolve a location to latitude and longitude using Google Geocoding API.
+    Resolve a location to latitude and longitude using the Azure Maps Geocoding API.
     """
-    GEOCODING_API_URL = "https://maps.googleapis.com/maps/api/geocode/json"
-    params = {"address": location, "key": GOOGLE_MAPS_API_KEY}
-    response = requests.get(GEOCODING_API_URL, params=params)
+    params = {
+        "subscription-key": AZURE_MAPS_API_KEY,
+        "api-version": "2025-01-01",
+        "query": location
+    }
+    response = requests.get(GEOCODE_URL, params=params)
     if response.status_code == 200:
         data = response.json()
-        if data["status"] == "OK":
-            result = data["results"][0]["geometry"]["location"]
-            return json.dumps({"latitude": result["lat"], "longitude": result["lng"]})
+        features = data.get("features", [])
+        if features:
+            # GeoJSON: [lon, lat]
+            lon, lat = features[0]["geometry"]["coordinates"]
+            return json.dumps({"latitude": lat, "longitude": lon})
     return json.dumps({"error": "Geocoding failed"})
-
-
 
 query = st.text_area(
     "Describe the home you're looking for",
