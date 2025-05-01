@@ -6,7 +6,7 @@
 
 ## DONE
 1. Get rid of google collab specific code blocks. 
-2. Streamline notebook code blocks. Got rid of "raw" index. Data ingestion is still too slow to run this code block live. 
-3. Added a max_docs setting in case we want to show data ingestion live with a partial dataset. (need to figure out if it's worth trouble or just too risky)
-4. Revise all of the markdown blocks to align with streamlined flow.
-5. Swap out Google Maps search with Microsoft Maps search
+2. Streamline notebook code blocks. Got rid of "raw" index. Data ingestion may be too slow to run live. 
+3. Revise all of the markdown blocks to align with streamlined flow.
+4. Swap out Google Maps search with Microsoft Maps search
+5. Trimmed and localized the demo data set in properties.jsonl file. New data set has 10K records.
