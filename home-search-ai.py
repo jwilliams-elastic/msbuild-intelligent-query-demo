@@ -11,14 +11,14 @@ from elasticsearch import Elasticsearch, helpers, NotFoundError, TransportError,
 from elasticsearch.helpers import scan, bulk
 import requests
 import requests, json
-import httpx
+import httpx 
 
 
 st.title("🏡 Find a Home")
 
 AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
-ELASTIC_SERVERLESS_URL = os.getenv("ELASTIC_SERVERLESS_URL")
-ELASTIC_SERVERLESS_API_KEY = os.getenv("ELASTIC_SERVERLESS_API_KEY")
+ELASTIC_URL = os.getenv("ELASTIC_URL")
+ELASTIC_API_KEY = os.getenv("ELASTIC_API_KEY")
 GEOCODE_URL = os.getenv("GEOCODE_URL")
 AZURE_MAPS_API_KEY = os.getenv("AZURE_MAPS_API_KEY")
 AZURE_OPENAI_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
@@ -26,8 +26,8 @@ AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION")
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 
 print(AZURE_OPENAI_API_KEY)
-print(ELASTIC_SERVERLESS_URL)
-print(ELASTIC_SERVERLESS_API_KEY)
+print(ELASTIC_URL)
+print(ELASTIC_API_KEY)
 print(AZURE_MAPS_API_KEY)
 print(AZURE_OPENAI_DEPLOYMENT_NAME)
 print(AZURE_OPENAI_API_VERSION)
@@ -46,8 +46,8 @@ try:
     )
 
     es = Elasticsearch(
-        ELASTIC_SERVERLESS_URL,
-        api_key=ELASTIC_SERVERLESS_API_KEY,
+        ELASTIC_URL,
+        api_key=ELASTIC_API_KEY,
         request_timeout=300
     )
 
@@ -57,7 +57,7 @@ except:
     pass  # Silently ignore all errors
 
 def setElasticClient():
-  es = Elasticsearch(ELASTIC_SERVERLESS_URL, api_key=ELASTIC_SERVERLESS_API_KEY, request_timeout=300)
+  es = Elasticsearch(ELASTIC_URL, api_key=ELASTIC_API_KEY, request_timeout=300)
   es.info()
 
 def setAzureClient():
@@ -470,7 +470,7 @@ def geocode_location(location):
 query = st.text_area(
     "Describe the home you're looking for",
     height=100,
-    placeholder="e.g., within 20 miles of clearwater beach with two bedrooms two baths, 1000 square feet,  and with water views"
+    placeholder="e.g., within 20 miles of disney world orlando with two bedrooms 2 baths, 1000 square feet and a pool"
 )
 
 if query:
