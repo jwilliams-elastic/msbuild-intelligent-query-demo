@@ -10,6 +10,8 @@ namespace HomeFinderApp.Models
         public decimal AnnualTax { get; set; }
         public decimal MaintenanceFee { get; set; }
         public List<string> Features { get; set; } = new();
+
+        public string PropertyDescription { get; set; } = "";
     }
 }
 

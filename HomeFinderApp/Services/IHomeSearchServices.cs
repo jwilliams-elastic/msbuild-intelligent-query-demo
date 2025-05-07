@@ -12,12 +12,12 @@ namespace HomeFinderApp.Services
         Task<string> ExtractParameters(string argsJson);
     }
 
-    public interface IGeocodingTool
+    public interface IGeocodeTool
     {
         Task<string> GetGeocode(string argsJson);
     }
 
-    public interface IPropertySearchTool
+    public interface ISearchTool
     {
         Task<string> Search(string argsJson);
     }

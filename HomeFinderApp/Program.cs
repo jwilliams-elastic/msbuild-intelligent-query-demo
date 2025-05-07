@@ -37,8 +37,8 @@ builder.Services.AddHttpClient<IHomeSearchService, HomeSearchService>();
 // register your home‐search service
 builder.Services.AddScoped<IHomeSearchService, HomeSearchService>();
 builder.Services.AddScoped<IParameterExtractionTool, ParameterExtractionTool>();
-builder.Services.AddScoped<IGeocodingTool, GeoCodingTool>();
-builder.Services.AddScoped<IPropertySearchTool, PropertySearchTool>();
+builder.Services.AddScoped<IGeocodeTool, GeoCodeTool>();
+builder.Services.AddScoped<ISearchTool, SearchTool>();
 
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();

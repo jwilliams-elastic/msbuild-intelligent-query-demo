@@ -13,20 +13,20 @@ namespace HomeFinderApp.Services
         private readonly HttpClient _httpClient;
         
         private readonly IParameterExtractionTool _parameterExtractionTool;
-        private readonly IGeocodingTool _geocodingTool;
-        private readonly IPropertySearchTool _propertySearchTool;
+        private readonly IGeocodeTool _geocodeTool;
+        private readonly ISearchTool _searchTool;
 
         public HomeSearchService(
             IParameterExtractionTool parameterExtractionTool,
-            IGeocodingTool geocodingTool,
-            IPropertySearchTool propertySearchTool,
+            IGeocodeTool geocodeTool,
+            ISearchTool searchTool,
             AzureOpenAIClient azureClient,
             IConfiguration configuration,
             HttpClient httpClient)
         {             
             _parameterExtractionTool = parameterExtractionTool;
-            _geocodingTool = geocodingTool;
-            _propertySearchTool = propertySearchTool;
+            _geocodeTool = geocodeTool;
+            _searchTool = searchTool;
             _azureOpenAIClient = azureClient;  
             _httpClient = new HttpClient();
         }
@@ -69,7 +69,7 @@ namespace HomeFinderApp.Services
                             location     = new { type = "string", description = "Location name to geocode" },
                             square_footage = new { type = "number", description = "Square footage without commas" },
                             home_price   = new { type = "number", description = "Home price without $ or commas" },
-                            feature      = new { type = "string", description = "Delimited features, e.g., *pool*garage*" }
+                            feature      = new { type = "string", description = "Delimited features, e.g., pool, garage" }
                         },
                         required = new[] { "query", "feature" }
                     })
@@ -109,7 +109,7 @@ namespace HomeFinderApp.Services
                             bathrooms      = new { type = "number", description = "The number of bathrooms a home may have (e.g., 2, 2.5, 3).  Convert text representation of numbers into numeric" },
                             square_footage = new { type = "number", description = "Sqaure footage of home (e.g., 1200, 15000). No commas just the number. If the query supplies 5,000 then parse it as 5000" },
                             home_price     = new { type = "number", description = "The price of the home for sale without $ or commas. If the query supplies $100,000 then parse it as 100000" },
-                            feature        = new { type = "string", description = "home features, amenities, or descriptive terms (e.g., 2 car garage, pool, gym, modern, luxurious). This can include multiple options.  Each feature option must be enclosed with *.  For example pool and updated kitchen should be formated to *pool*updated kitchen* . Single features such as pool shoudl be encapusalted with *pool*" }
+                            feature        = new { type = "string", description = "home features, amenities, or descriptive terms (e.g., 2 car garage, pool, gym, modern, luxurious). This can include multiple options.  Each feature option must be enclosed with double quotes. Comma delimit multiple features. For example pool and updated kitchen should be formated to \"pool\", \"updated kitchen\" ." }
                         },
                         required = new[] { "query" }
                     })
@@ -157,10 +157,10 @@ namespace HomeFinderApp.Services
                                 resultJson = await _parameterExtractionTool.ExtractParameters(argsJson);
                                 break;
                             case "geocode_location":
-                                resultJson = await _geocodingTool.GetGeocode(argsJson);
+                                resultJson = await _geocodeTool.GetGeocode(argsJson);
                                 break;
                             case "query_elasticsearch":
-                                resultJson     = await _propertySearchTool.Search(argsJson);
+                                resultJson     = await _searchTool.Search(argsJson);
                                 break;
                             default:
                                 throw new InvalidOperationException($"Unknown tool: {toolName}");
@@ -184,108 +184,10 @@ namespace HomeFinderApp.Services
 
                 break;
             }
-
-            // 6) Once we get here, the last `choice` is the final assistant response
            
             var homes = ParseHomeResultsFrom(resultJson);
             return homes;
         }
-
-        
-    //     private static List<HomeResult> ParseHomeResultsFrom(string resultJson)
-    //     {
-    //         Console.WriteLine("ParseHomeResultsFrom: " + resultJson);
-    //         var results = new List<HomeResult>();
-    //         var raw = resultJson.Trim();
-
-    //         // 1) Extract each JSON snippet between <home>…</home>
-    //         var matches = Regex.Matches(raw, "<home>(.*?)</home>", RegexOptions.Singleline);
-    //         foreach (Match match in matches)
-    //         {
-    //             var jsonBlob = match.Groups[1].Value;
-
-    //             // 2) Deserialize into a dict of JsonElements
-    //             var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(jsonBlob)
-    //                     ?? new Dictionary<string, JsonElement>();
-
-    //             // 3) Flatten any single-element arrays
-    //             var flat = new Dictionary<string, JsonElement>();
-    //             foreach (var kv in dict)
-    //             {
-    //                 if (kv.Value.ValueKind == JsonValueKind.Array && kv.Value.GetArrayLength() == 1)
-    //                     flat[kv.Key] = kv.Value[0];
-    //                 else
-    //                     flat[kv.Key] = kv.Value;
-    //             }
-
-    //             // 4) Map into HomeResult
-    //             var hr = new HomeResult
-    //             {
-    //                 Title = flat.TryGetValue("title", out var t) && t.ValueKind == JsonValueKind.String
-    //                         ? t.GetString()!
-    //                         : ""
-    //             };
-
-    //             static void SetDecimal(string key, Dictionary<string, JsonElement> src, Action<decimal> setter)
-    //             {
-    //                 if (src.TryGetValue(key, out var el))
-    //                 {
-    //                     if (el.ValueKind == JsonValueKind.Number && el.TryGetDecimal(out var d))
-    //                         setter(d);
-    //                     else if (el.ValueKind == JsonValueKind.String && 
-    //                             decimal.TryParse(el.GetString(), out var d2))
-    //                         setter(d2);
-    //                 }
-    //             }
-
-    //             static void SetInt(string key, Dictionary<string, JsonElement> src, Action<int> setter)
-    //             {
-    //                 if (src.TryGetValue(key, out var el))
-    //                 {
-    //                     if (el.ValueKind == JsonValueKind.Number && el.TryGetInt32(out var i))
-    //                         setter(i);
-    //                     else if (el.ValueKind == JsonValueKind.String &&
-    //                             int.TryParse(el.GetString(), out var i2))
-    //                         setter(i2);
-    //                 }
-    //             }
-
-    //             SetDecimal("home-price",          flat, v => hr.HomePrice      = v);
-    //             SetDecimal("number-of-bedrooms",  flat, v => hr.Bedrooms       = v);
-    //             SetDecimal("number-of-bathrooms", flat, v => hr.Bathrooms      = v);
-    //             SetInt    ("square-footage",      flat, v => hr.SquareFootage = v);
-    //             SetDecimal("annual-tax",          flat, v => hr.AnnualTax      = v);
-    //             SetDecimal("maintenance-fee",     flat, v => hr.MaintenanceFee = v);
-
-    //             // 5) Parse features (comma-separated string, possibly wrapped in a single-element array)
-    //             var features = new List<string>();
-    //             if (flat.TryGetValue("property-features", out var feats))
-    //             {
-    //                 string? rawFeatString = null;
-    //                 if (feats.ValueKind == JsonValueKind.Array && feats.GetArrayLength() == 1)
-    //                     rawFeatString = feats[0].GetString();
-    //                 else if (feats.ValueKind == JsonValueKind.String)
-    //                     rawFeatString = feats.GetString();
-
-    //                 if (!string.IsNullOrWhiteSpace(rawFeatString))
-    //                 {
-    //                     features = rawFeatString
-    //                         .Split(',', StringSplitOptions.RemoveEmptyEntries)
-    //                         .Select(f => f.Trim())
-    //                         .Where(f => f.Length > 0)
-    //                         .ToList();
-    //                 }
-    //             }
-
-    //             hr.Features = features;
-    //             results.Add(hr);
-    //         }
-    //         Console.WriteLine("Parsed results: " + JsonSerializer.Serialize(results));
-    //         return results;
-    //     }
-
-    // }
-
         private static List<HomeResult> ParseHomeResultsFrom(string resultJson)
         {
             Console.WriteLine("ParseHomeResultsFrom: " + resultJson);
@@ -375,6 +277,13 @@ namespace HomeFinderApp.Services
                                         .Select(f => f.Trim())
                                         .ToList();
                                 }
+                            }
+
+                            if (fields.TryGetProperty("property-description", out var propertyDescriptionElement) &&
+                                propertyDescriptionElement.ValueKind == JsonValueKind.Array &&
+                                propertyDescriptionElement.GetArrayLength() > 0)
+                            {
+                                homeResult.PropertyDescription = propertyDescriptionElement[0].GetString() ?? string.Empty;
                             }
 
                             results.Add(homeResult);

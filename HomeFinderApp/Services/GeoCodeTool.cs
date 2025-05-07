@@ -3,13 +3,13 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace HomeFinderApp.Services
 {
-    public class GeoCodingTool : IGeocodingTool
+    public class GeoCodeTool : IGeocodeTool
     {
         private readonly string _azureMapsUrl;
         private readonly string _azureMapsApiKey;
         private readonly HttpClient _httpClient;
 
-        public GeoCodingTool(
+        public GeoCodeTool(
             IConfiguration configuration)
         {             
             _httpClient = new HttpClient();

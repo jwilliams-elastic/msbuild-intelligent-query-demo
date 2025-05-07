@@ -5,11 +5,11 @@ using Elastic.Transport;
 
 namespace HomeFinderApp.Services
 {
-    public class PropertySearchTool : IPropertySearchTool
+    public class SearchTool : ISearchTool
     {
         private readonly ElasticsearchClient _es;
 
-        public PropertySearchTool(
+        public SearchTool(
             ElasticsearchClient es)
         {               
             _es = es;
@@ -51,6 +51,19 @@ namespace HomeFinderApp.Services
 
             if (args.Bathrooms.HasValue) 
                 cleanedParams["bathrooms"] = args.Bathrooms.Value;
+
+            if (args.Home_Price.HasValue) 
+                cleanedParams["home_price"] = args.Home_Price.Value;
+
+            if (args.Tax.HasValue) 
+                cleanedParams["tax"] = args.Tax.Value;
+
+            if (args.Maintenance.HasValue) 
+                cleanedParams["tax"] = args.Maintenance.Value;
+
+            if (args.Square_Footage.HasValue)
+                cleanedParams["square_footage"] = args.Square_Footage.Value;
+
 
             // Debug: log parameters
             Console.WriteLine("Parameters for Elasticsearch:");
@@ -135,8 +148,8 @@ namespace HomeFinderApp.Services
             public int?    Bathrooms      { get; set; }
             public decimal? Tax           { get; set; }
             public decimal? Maintenance   { get; set; }
-            public decimal? HomePrice     { get; set; }
-            public int?    SquareFootage  { get; set; }
+            public decimal? Home_Price     { get; set; }
+            public int?    Square_Footage  { get; set; }
         }
     }
 }
