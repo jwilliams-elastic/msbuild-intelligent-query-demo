@@ -196,7 +196,7 @@ namespace HomeFinderApp.Services
 
             // 6) Once we get here, the last `choice` is the final assistant response
            
-            var homes = ParseHomeResultsFrom(completion);
+            var homes = ParseHomeResultsFrom(resultJson);
             return homes;
         }
 
