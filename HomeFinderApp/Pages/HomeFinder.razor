@@ -3,7 +3,8 @@
 @page "/"
 @inject IHomeSearchService HomeSearchService
 
-<h1>🏡 Find a Home</h1>
+<h1>MS Build Demo - 2025</h1>
+<h5>Azure LLM Functions with Elasticsearch for smarter query experiences</h5>
 
 <textarea @bind="Query" class="form-control" placeholder="e.g., within 20 miles of Disney World..." rows="4"></textarea>
 <button class="btn btn-primary mt-2" @onclick="OnSearch" disabled="@IsLoading">
@@ -23,12 +24,12 @@ else if (Results?.Any() == true)
                 <div class="card-body">
                     <h5 class="card-title">@home.Title</h5>
                     <p>
-                        <span>🏠 <strong>Price:</strong> @home.HomePrice:C</span><br />
+                        <span>🏠 <strong>Price:</strong> $@home.HomePrice</span><br />
                         <span>🛏 <strong>Bedrooms:</strong> @home.Bedrooms</span><br />
                         <span>🛁 <strong>Bathrooms:</strong> @home.Bathrooms</span><br />
                         <span>📐 <strong>Sq Ft:</strong> @home.SquareFootage</span><br />
-                        <span>💰 <strong>Tax:</strong> @home.AnnualTax:C</span><br />
-                        <span>🧾 <strong>Maintenance:</strong> @home.MaintenanceFee:C</span>
+                        <span>💰 <strong>Tax:</strong> $@home.AnnualTax</span><br />
+                        <span>🧾 <strong>Maintenance:</strong> $@home.MaintenanceFee</span>
                     </p>
                     @if (home.Features.Any())
                     {
@@ -48,6 +49,10 @@ else if (Results?.Any() == true)
             </div>
         }
     </div>
+}
+else if (Results is not null && !Results.Any())
+{
+    <div class="alert alert-warning mt-3">No results found. Please try a different query.</div>
 }
 
 @code {
@@ -69,7 +74,7 @@ else if (Results?.Any() == true)
         try
         {
             IsLoading = true;
-            Results = await HomeSearchService.SearchHomesAsync(Query);
+            Results = await HomeSearchService.LLMSearchWithTools(Query);
         }
         catch (Exception ex)
         {

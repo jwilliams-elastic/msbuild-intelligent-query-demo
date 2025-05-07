@@ -1,43 +1,37 @@
 using Azure.AI.OpenAI;
 using OpenAI.Chat;
 using System.Text.Json;
-using Elastic.Clients.Elasticsearch;
-using Elastic.Transport;
-using System.Text.RegularExpressions;
-
 using Microsoft.AspNetCore.WebUtilities;
-
 using HomeFinderApp.Models;
-using Azure;
 
 namespace HomeFinderApp.Services
 {
     public class HomeSearchService : IHomeSearchService
     {
-        private readonly ElasticsearchClient _es;
+        
         private readonly AzureOpenAIClient _azureOpenAIClient;
-        private readonly string _azureMapsUrl;
-        private readonly string _azureMapsApiKey;
         private readonly HttpClient _httpClient;
+        
+        private readonly IParameterExtractionTool _parameterExtractionTool;
+        private readonly IGeocodingTool _geocodingTool;
+        private readonly IPropertySearchTool _propertySearchTool;
 
         public HomeSearchService(
+            IParameterExtractionTool parameterExtractionTool,
+            IGeocodingTool geocodingTool,
+            IPropertySearchTool propertySearchTool,
             AzureOpenAIClient azureClient,
-            ElasticsearchClient es,
             IConfiguration configuration,
             HttpClient httpClient)
         {             
+            _parameterExtractionTool = parameterExtractionTool;
+            _geocodingTool = geocodingTool;
+            _propertySearchTool = propertySearchTool;
             _azureOpenAIClient = azureClient;  
-            _es = es;
             _httpClient = new HttpClient();
-            
-            // Retrieve the Azure Maps settings from appsettings.json
-            _azureMapsUrl = configuration["AzureMapsSettings:Url"] 
-                ?? throw new InvalidOperationException("Azure Maps URL is missing.");
-            _azureMapsApiKey = configuration["AzureMapsSettings:ApiKey"] 
-                ?? throw new InvalidOperationException("Azure Maps API key is missing.");
         }
 
-        public async Task<List<HomeResult>> SearchHomesAsync(string query)
+        public async Task<List<HomeResult>> LLMSearchWithTools(string query)
         {   
             // 1) Create a list of messages to send to the model
             var messages = new List<ChatMessage>
@@ -160,16 +154,13 @@ namespace HomeFinderApp.Services
                         switch (toolName)
                         {
                             case "extract_home_search_parameters":
-                                resultJson = HandleExtractHomeSearchParameters(argsJson);
+                                resultJson = await _parameterExtractionTool.ExtractParameters(argsJson);
                                 break;
                             case "geocode_location":
-                                resultJson = await HandleGeocodeLocationAsync(argsJson);
+                                resultJson = await _geocodingTool.GetGeocode(argsJson);
                                 break;
                             case "query_elasticsearch":
-                                if (!parameters.ContainsKey("query"))
-                                    throw new InvalidOperationException("'query' is required before calling Elasticsearch.");
-                                // pass the **entire**, updated parameter set into your ES query
-                                resultJson     = await HandleQueryElasticsearchAsync(argsJson);
+                                resultJson     = await _propertySearchTool.Search(argsJson);
                                 break;
                             default:
                                 throw new InvalidOperationException($"Unknown tool: {toolName}");
@@ -200,225 +191,7 @@ namespace HomeFinderApp.Services
             return homes;
         }
 
-        private string HandleExtractHomeSearchParameters(string argsJson)
-        {
-            Console.WriteLine("HandleExtractHomeSearchParameters: " + argsJson);
-            // 1) Parse the incoming JSON into a dictionary of JsonElements
-            var incoming = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(argsJson)
-                        ?? throw new InvalidOperationException("Invalid arguments JSON");
-
-            // 2) Convert to a Dictionary<string, object> so we can inspect & mutate easily
-            var parameters = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            foreach (var kv in incoming)
-            {
-                switch (kv.Value.ValueKind)
-                {
-                    case JsonValueKind.Number:
-                        if (kv.Value.TryGetDecimal(out var dec))
-                            parameters[kv.Key] = dec;
-                        break;
-                    case JsonValueKind.String:
-                        parameters[kv.Key] = kv.Value.GetString()!;
-                        break;
-                    default:
-                        // preserve any other JSON value as raw text
-                        parameters[kv.Key] = kv.Value.GetRawText();
-                        break;
-                }
-            }
-
-            // 3) If we have lat & lon but no distance, set a default
-            if (parameters.ContainsKey("latitude") 
-            && parameters.ContainsKey("longitude") 
-            && !parameters.ContainsKey("distance"))
-            {
-                parameters["distance"] = "5000m";
-            }
-
-            // 4) Return it all as a JSON string (this becomes the function’s “tool” output)
-            Console.WriteLine("Extracted Parameters: " + JsonSerializer.Serialize(parameters));
-            return JsonSerializer.Serialize(parameters);
-        }
-
-        private async Task<string> HandleGeocodeLocationAsync(string argsJson)
-        {
-            // 1) Parse arguments JSON
-            var args = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(argsJson)
-                    ?? throw new ArgumentException("Invalid arguments JSON", nameof(argsJson));
-
-            if (!args.TryGetValue("location", out var locElem) 
-                || locElem.ValueKind != JsonValueKind.String)
-            {
-                throw new ArgumentException("Missing or invalid 'location' parameter.");
-            }
-            string location = locElem.GetString()!;
-
-            // 2) Build the request URL with query parameters
-            var queryParams = new Dictionary<string, string?>
-            {
-                ["subscription-key"] = _azureMapsApiKey,
-                ["api-version"]      = "2025-01-01",
-                ["query"]            = location,
-                ["limit"]            = "1",
-                ["countrySet"]       = "US",
-                ["language"]         = "en-US"
-            };
-            string requestUrl = QueryHelpers.AddQueryString(_azureMapsUrl, queryParams);
-
-            // 3) Call Azure Maps
-            var response = await _httpClient.GetAsync(requestUrl);
-            if (response.IsSuccessStatusCode)
-            {
-                using var stream = await response.Content.ReadAsStreamAsync();
-                using var doc    = await JsonDocument.ParseAsync(stream);
-
-                // 4) Extract coordinates from GeoJSON
-                if (doc.RootElement.TryGetProperty("features", out var features)
-                    && features.ValueKind == JsonValueKind.Array
-                    && features.GetArrayLength() > 0)
-                {
-                    var coords = features[0]
-                        .GetProperty("geometry")
-                        .GetProperty("coordinates");
-                    decimal lon = coords[0].GetDecimal();
-                    decimal lat = coords[1].GetDecimal();
-
-                    // 5) Return as JSON
-                    var result = new Dictionary<string, decimal>
-                    {
-                        ["latitude"]  = lat,
-                        ["longitude"] = lon
-                    };
-                    return JsonSerializer.Serialize(result);
-                }
-            }
-            return JsonSerializer.Serialize(new { error = "Unable to geocode location." });
-        }
-
-        private async Task<string> HandleQueryElasticsearchAsync(string argsJson)
-        {
-            // 1. Parse the JSON arguments
-            var args = JsonSerializer.Deserialize<ElasticsearchArgs>(
-                argsJson,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-            );
-            if (args == null)
-            {
-                Console.WriteLine("❌ Invalid arguments JSON.");
-                return JsonSerializer.Serialize(new { error = "Invalid arguments JSON." });
-            }
-
-            Console.WriteLine("✅ Deserialized args: " + JsonSerializer.Serialize(args));
-
-             // 2. Build cleaned parameters
-            var cleanedParams = new Dictionary<string, object>();
-            if (!string.IsNullOrWhiteSpace(args.Query)) 
-                cleanedParams["query"] = args.Query;
-
-            if (args.Latitude.HasValue) 
-                cleanedParams["latitude"] = args.Latitude.Value;
-
-            if (args.Longitude.HasValue) 
-                cleanedParams["longitude"] = args.Longitude.Value;
-
-            if (!string.IsNullOrWhiteSpace(args.Feature)) 
-                cleanedParams["feature"] = args.Feature;
-
-            if (args.Distance != null) 
-                cleanedParams["distance"] = args.Distance;
-                
-            if (args.Bedrooms.HasValue) 
-                cleanedParams["bedrooms"] = args.Bedrooms.Value;
-
-            if (args.Bathrooms.HasValue) 
-                cleanedParams["bathrooms"] = args.Bathrooms.Value;
-
-            // Debug: log parameters
-            Console.WriteLine("Parameters for Elasticsearch:");
-            Console.WriteLine(JsonSerializer.Serialize(cleanedParams, new JsonSerializerOptions { WriteIndented = true }));
-
-            var templateId = "properties-search-template";
-            var indexName = "properties";
-            var maxRetries = 2;
-            var retryDelay = 2;  
-            // 4. Construct the search_template body
-            var queryBody = new
-            {
-                id     = templateId,
-                @params = cleanedParams
-            };
-            Console.WriteLine("Elasticsearch Query:");
-            Console.WriteLine(JsonSerializer.Serialize(queryBody, new JsonSerializerOptions { WriteIndented = true }));
-
-            // 5. Invoke ES with retry logic
-            Dictionary<string, object> responseBody = new Dictionary<string, object>();
-            for (int attempt = 0; attempt <= maxRetries; attempt++)
-            {
-                try
-                {
-                    // low-level transport call to POST /{INDEX_NAME}/_search/template
-                    var pathAndQuery = $"{indexName}/_search/template";
-                    var endpoint    = new EndpointPath(Elastic.Transport.HttpMethod.POST, pathAndQuery);
-                    var stringResp  = await _es.Transport
-                        .RequestAsync<StringResponse>(
-                            endpoint,
-                            PostData.Serializable(queryBody)
-                        )
-                        .ConfigureAwait(false);
-
-                    Console.WriteLine("✅ Elasticsearch query successful.");
-                    Console.WriteLine("Response:");
-                    Console.WriteLine(stringResp.Body);
-                    responseBody = JsonSerializer.Deserialize<Dictionary<string, object>>(stringResp.Body) ?? new Dictionary<string, object>();
-                    break;
-                }
-                catch (TransportException ex) when (ex.Message.Contains("missing or invalid credentials"))
-                {
-                    Console.WriteLine("❌ Authentication failed: missing or invalid credentials.");
-                    break;
-                }
-                catch (TransportException ex) when (
-                    ex.Message.Contains("Starting deployment timed out") &&
-                    attempt < maxRetries)
-                {
-                    Console.WriteLine($"⚠️ Model not ready yet (attempt {attempt+1}/{maxRetries}). Retrying...");
-                    await Task.Delay(retryDelay).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error while querying Elasticsearch: {ex.Message}");
-                    return JsonSerializer.Serialize(new { error = ex.Message });
-                }
-            }
-
-            // 6. Log total hits if present
-            if (responseBody is not null
-                && responseBody.TryGetValue("hits", out var hitsObj)
-                && hitsObj is JsonElement hitsElem
-                && hitsElem.TryGetProperty("total", out var totalElem)
-                && totalElem.TryGetProperty("value", out var valueElem)
-                && valueElem.TryGetInt32(out var totalCount))
-            {
-                Console.WriteLine($"Number of results found: {totalCount}");
-            }
-
-            return JsonSerializer.Serialize(responseBody);
-        }
-
-        private class ElasticsearchArgs
-        {
-            public string?  Query          { get; set; }
-            public double? Latitude       { get; set; }
-            public double? Longitude      { get; set; }
-            public string?  Feature        { get; set; }
-            public string? Distance       { get; set; }
-            public int?    Bedrooms       { get; set; }
-            public int?    Bathrooms      { get; set; }
-            public decimal? Tax           { get; set; }
-            public decimal? Maintenance   { get; set; }
-            public decimal? HomePrice     { get; set; }
-            public int?    SquareFootage  { get; set; }
-        }
+        
     //     private static List<HomeResult> ParseHomeResultsFrom(string resultJson)
     //     {
     //         Console.WriteLine("ParseHomeResultsFrom: " + resultJson);
