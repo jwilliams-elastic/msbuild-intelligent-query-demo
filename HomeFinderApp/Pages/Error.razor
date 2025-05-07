@@ -1,0 +1,33 @@
+@page "/Error"
+@layout MainLayout
+@inject NavigationManager NavigationManager
+
+<div class="d-flex justify-content-center align-items-center" style="height: 80vh;">
+  <div class="text-center">
+    <h1 class="display-1">😞 Oops!</h1>
+    <p class="lead">Something went wrong. We’re sorry for the inconvenience.</p>
+
+    <p>Please try one of the following:</p>
+    <ul class="list-unstyled">
+      <li>
+        <a class="btn btn-primary m-1" href="/">🏠 Return to Home</a>
+      </li>
+      <li>
+        <button class="btn btn-secondary m-1" @onclick="ReloadPage">🔄 Reload this page</button>
+      </li>
+      <li>
+        <a class="btn btn-link m-1" href="mailto:support@example.com">
+          📧 Contact support
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+@code {
+    private void ReloadPage()
+    {
+        // forceLoad reloads from the server
+        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+    }
+}

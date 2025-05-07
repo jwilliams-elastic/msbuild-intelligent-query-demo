@@ -1,2 +1,5 @@
 .env
 __pycache__/api.cpython-312.pyc
+HomeFinderApp/appsettings.json
+HomeFinderApp/bin
+HomeFinderApp/obj

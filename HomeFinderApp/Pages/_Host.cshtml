@@ -1,0 +1,23 @@
+@page "/"
+@namespace HomeFinderApp.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <base href="~/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home Finder</title>
+     <link href="lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+   
+    <link href="css/site.css" rel="stylesheet" />
+</head>
+<body>
+    <app>
+        <component type="typeof(App)" render-mode="ServerPrerendered" />
+    </app>
+
+    <script src="_framework/blazor.server.js"></script>
+</body>
+</html>

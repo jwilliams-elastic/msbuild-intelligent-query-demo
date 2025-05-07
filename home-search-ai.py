@@ -14,6 +14,8 @@ import requests, json
 import httpx 
 
 
+
+
 st.title("🏡 Find a Home")
 
 AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")

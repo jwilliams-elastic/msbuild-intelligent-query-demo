@@ -1,0 +1,83 @@
+@using HomeFinderApp.Services
+@using HomeFinderApp.Models
+@page "/"
+@inject IHomeSearchService HomeSearchService
+
+<h1>🏡 Find a Home</h1>
+
+<textarea @bind="Query" class="form-control" placeholder="e.g., within 20 miles of Disney World..." rows="4"></textarea>
+<button class="btn btn-primary mt-2" @onclick="OnSearch" disabled="@IsLoading">
+    @(IsLoading ? "Searching…" : "Find Homes")
+</button>
+
+@if (ErrorMessage is not null)
+{
+    <div class="alert alert-danger mt-3">@ErrorMessage</div>
+}
+else if (Results?.Any() == true)
+{
+    <div class="mt-4">
+        @foreach (var home in Results)
+        {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">@home.Title</h5>
+                    <p>
+                        <span>🏠 <strong>Price:</strong> @home.HomePrice:C</span><br />
+                        <span>🛏 <strong>Bedrooms:</strong> @home.Bedrooms</span><br />
+                        <span>🛁 <strong>Bathrooms:</strong> @home.Bathrooms</span><br />
+                        <span>📐 <strong>Sq Ft:</strong> @home.SquareFootage</span><br />
+                        <span>💰 <strong>Tax:</strong> @home.AnnualTax:C</span><br />
+                        <span>🧾 <strong>Maintenance:</strong> @home.MaintenanceFee:C</span>
+                    </p>
+                    @if (home.Features.Any())
+                    {
+                        <div>
+                            <strong>✨ Features:</strong>
+                            <div class="row">
+                                @foreach (var feat in home.Features)
+                                {
+                                    <div class="col-6 col-md-3">
+                                        <span class="badge bg-light text-dark">@feat</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private string Query { get; set; } = "";
+    private bool IsLoading { get; set; }
+    private string? ErrorMessage { get; set; }
+    private List<HomeFinderApp.Models.HomeResult>? Results { get; set; }
+
+    private async Task OnSearch()
+    {
+        ErrorMessage = null;
+        Results = null;
+        if (string.IsNullOrWhiteSpace(Query))
+        {
+            ErrorMessage = "Please enter a search query.";
+            return;
+        }
+
+        try
+        {
+            IsLoading = true;
+            Results = await HomeSearchService.SearchHomesAsync(Query);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}
