@@ -40,9 +40,9 @@ namespace HomeFinderApp.Services
             }
 
             // 4) Return it all as a JSON string (this becomes the function’s “tool” output)
-            var geocodeJson = JsonSerializer.Serialize(parameters);
-            await Console.Out.WriteLineAsync("Extracted Parameters: " + geocodeJson);
-            return geocodeJson;
+            var parameterJson = JsonSerializer.Serialize(parameters);
+            await Console.Out.WriteLineAsync("Extracted Parameters: " + parameterJson);
+            return parameterJson;
         }
     }
 }

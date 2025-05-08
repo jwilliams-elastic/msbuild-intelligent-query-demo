@@ -1,7 +1,6 @@
 using Azure.AI.OpenAI;
 using OpenAI.Chat;
 using System.Text.Json;
-using Microsoft.AspNetCore.WebUtilities;
 using HomeFinderApp.Models;
 
 namespace HomeFinderApp.Services
