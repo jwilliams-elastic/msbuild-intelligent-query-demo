@@ -43,8 +43,6 @@ namespace HomeFinderApp.Services
                     "Don't make assumptions about what values to use with functions. Ask for clarification if a user request is ambiguous." +
                     "Provide details about the homes in valid JSON format, as one-line strings, without any markdown formatting or triple backticks. " +
                     "Do not wrap the output in json or , and do not include line breaks. " +
-                    "Seperate each home json object by comma and newline " +
-                    "enclose each json object with <home></home> " +
                     "for features, add a comma per feature such as Central air Garage Carpet Flooring Central Air Cooling this converted to Central air, Garage, Carpet Flooring, Central Air Cooling"
                 ),
                 new UserChatMessage(query)
