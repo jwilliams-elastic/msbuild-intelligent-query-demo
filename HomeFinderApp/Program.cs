@@ -31,15 +31,15 @@ builder.Services.AddSingleton<AzureOpenAIClient>(sp =>
     var credential = new AzureKeyCredential(cfg.ApiKey);
     return new AzureOpenAIClient(new Uri(cfg.Endpoint), credential);
 });
-
-builder.Services.AddHttpClient<IHomeSearchService, HomeSearchService>();
-
+builder.Services.AddHttpClient();
+builder.Services.AddLogging(builder => builder.AddConsole());
 // register your home‐search service
-builder.Services.AddScoped<IHomeSearchService, HomeSearchService>();
-builder.Services.AddScoped<IParameterExtractionTool, ParameterExtractionTool>();
-builder.Services.AddScoped<IGeocodeTool, GeoCodeTool>();
-builder.Services.AddScoped<ISearchTool, SearchTool>();
-
+builder.Services.AddScoped<IHomeSearchService, HomeSearchAgentService>();
+//plugins 
+builder.Services.AddScoped<IGeoCodePlugin, GeoCodePlugin>();
+builder.Services.AddScoped<IExtractParametersPlugin, ExtractParametersPlugin>();
+builder.Services.AddScoped<IElasticSearchPlugin, ElasticSearchPlugin>();
+builder.Services.AddSingleton<FunctionLoggingFilter>();
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 

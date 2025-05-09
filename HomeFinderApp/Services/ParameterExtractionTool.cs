@@ -6,7 +6,6 @@ namespace HomeFinderApp.Services
     {
         public async Task<string> ExtractParameters(string argsJson)
         {
-            Console.WriteLine("HandleExtractHomeSearchParameters: " + argsJson);
             // 1) Parse the incoming JSON into a dictionary of JsonElements
             var incoming = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(argsJson)
                         ?? throw new InvalidOperationException("Invalid arguments JSON");
