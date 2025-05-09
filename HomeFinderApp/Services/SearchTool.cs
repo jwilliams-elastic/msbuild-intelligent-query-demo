@@ -59,7 +59,7 @@ namespace HomeFinderApp.Services
                 cleanedParams["tax"] = args.Tax.Value;
 
             if (args.Maintenance.HasValue) 
-                cleanedParams["tax"] = args.Maintenance.Value;
+                cleanedParams["maintenance-fee"] = args.Maintenance.Value;
 
             if (args.Square_Footage.HasValue)
                 cleanedParams["square_footage"] = args.Square_Footage.Value;
@@ -98,9 +98,6 @@ namespace HomeFinderApp.Services
                         )
                         .ConfigureAwait(false);
 
-                    Console.WriteLine("✅ Elasticsearch query successful.");
-                    Console.WriteLine("Response:");
-                    Console.WriteLine(stringResp.Body);
                     responseBody = JsonSerializer.Deserialize<Dictionary<string, object>>(stringResp.Body) ?? new Dictionary<string, object>();
                     break;
                 }

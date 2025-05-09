@@ -42,7 +42,7 @@ namespace HomeFinderApp.Services
                     "Don't make assumptions about what values to use with functions. Ask for clarification if a user request is ambiguous." +
                     "Provide details about the homes in valid JSON format, as one-line strings, without any markdown formatting or triple backticks. " +
                     "Do not wrap the output in json or , and do not include line breaks. " +
-                    "for features, add a comma per feature such as Central air Garage Carpet Flooring Central Air Cooling this converted to Central air, Garage, Carpet Flooring, Central Air Cooling"
+                    "For features, add a comma per feature such as Central air Garage Carpet Flooring Central Air Cooling this converted to Central air, Garage, Carpet Flooring, Central Air Cooling"
                 ),
                 new UserChatMessage(query)
             };
@@ -67,8 +67,7 @@ namespace HomeFinderApp.Services
                             square_footage = new { type = "number", description = "Square footage without commas" },
                             home_price   = new { type = "number", description = "Home price without $ or commas" },
                             feature      = new { type = "string", description = "Delimited features, e.g., pool, garage" }
-                        },
-                        required = new[] { "query", "feature" }
+                        }
                     })
                 )
             );
@@ -95,7 +94,7 @@ namespace HomeFinderApp.Services
                         type = "object",
                         properties = new
                         {
-                            query          = new { type = "string", description = "The original search query (e.g., 'homes near Belongil Beach')." },
+                            query          = new { type = "string", description = "the full input query." },
                             latitude       = new { type = "number", description = "Latitude of the location." },
                             longitude      = new { type = "number", description = "Longitude of the location." },
                             location       = new { type = "string", description = "Location mentioned in the query (e.g., Belongil Beach, The woodlands texas)." },
