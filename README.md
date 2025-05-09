@@ -1,8 +1,7 @@
 # msbuild-intelligent-query-demo
 
 ## TODOS
-1. Swap out direct tools calls with an MCP server
-2. Replace the streamlit GUI with a simple ASP.NET front end or possibly react. 
+1. Add semantic kernel and remove Code Assistants OpenAI calls. 
 
 ## DONE
 1. Get rid of google collab specific code blocks. 
@@ -10,3 +9,6 @@
 3. Revise all of the markdown blocks to align with streamlined flow.
 4. Swap out Google Maps search with Microsoft Maps search
 5. Trimmed and localized the demo data set in properties.jsonl file. New data set has 10K records.
+6. Cleaned up data so features can be properly displayed
+7. Streamlined notebook so that it can be run live
+8. Fixed search template and LLM prompts to support a wider range of natural language searches.
