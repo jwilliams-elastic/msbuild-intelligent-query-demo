@@ -1,7 +1,7 @@
 # msbuild-intelligent-query-demo
 
 ## TODOS
-1. Add semantic kernel and remove Code Assistants OpenAI calls. 
+1. Incluede AZD resources for provisioning and deployment automation.
 
 ## DONE
 1. Get rid of google collab specific code blocks. 
@@ -12,3 +12,4 @@
 6. Cleaned up data so features can be properly displayed
 7. Streamlined notebook so that it can be run live
 8. Fixed search template and LLM prompts to support a wider range of natural language searches.
+9. Add semantic kernel and remove Code Assistants OpenAI calls. 
