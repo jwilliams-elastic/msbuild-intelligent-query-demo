@@ -54,7 +54,7 @@ public class ElasticSearchPlugin : IElasticSearchPlugin
         if (parameters.SquareFootage.HasValue)
             cleanedParams["square_footage"] = parameters.SquareFootage.Value;
         // Debug: log parameters
-        logger.LogInformation($"Params for Elastic:{JsonSerializer.Serialize(cleanedParams, new JsonSerializerOptions { WriteIndented = false })}");
+        //logger.LogInformation($"Params for Elastic:{JsonSerializer.Serialize(cleanedParams, new JsonSerializerOptions { WriteIndented = false })}");
         var templateId = "properties-search-template";
         var indexName = "properties";
         var maxRetries = 2;
@@ -65,7 +65,7 @@ public class ElasticSearchPlugin : IElasticSearchPlugin
             id = templateId,
             @params = cleanedParams
         };
-        logger.LogInformation($"Elastic query:{JsonSerializer.Serialize(queryBody, new JsonSerializerOptions { WriteIndented = false })}");
+        //logger.LogInformation($"Elastic query:{JsonSerializer.Serialize(queryBody, new JsonSerializerOptions { WriteIndented = false })}");
 
         // 5. Invoke ES with retry logic
         var responseBody = string.Empty;
@@ -83,7 +83,7 @@ public class ElasticSearchPlugin : IElasticSearchPlugin
                     )
                     .ConfigureAwait(false);
                 responseBody = stringResp.Body;
-                logger.LogInformation($"✅ Elastic resp:{responseBody}");
+                // logger.LogInformation($"✅ Elastic resp:{responseBody}");
             }
             catch (TransportException ex) when (ex.Message.Contains("missing or invalid credentials"))
             {
@@ -216,7 +216,8 @@ public class ElasticSearchPlugin : IElasticSearchPlugin
             logger.LogError("Error parsing home results: " + ex.Message);
         }
 
-        logger.LogInformation("Parsed results: " + JsonSerializer.Serialize(results));
+        // logger.LogInformation("Parsed results: " + JsonSerializer.Serialize(results));
+        logger.LogInformation($"Parsed {results.Count} results from Elasticsearch response.");
         return results;
     }
 

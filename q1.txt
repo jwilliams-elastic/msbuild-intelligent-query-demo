@@ -1,1 +1,0 @@
-[FILTER] query_elasticsearch.Query_Elasticsearch invoked. Arguments: [parameters, {"Query":"property near disney world florida with 30+ bathrooms and a pool and garage less than 500K","Distance":"10 mi","Bathrooms":20,"HomePrice":500000,"Feature":"pool, garage","Location":"disney world florida","Longitude":-81.58262634277344,"Latitude":28.403810501098633}]

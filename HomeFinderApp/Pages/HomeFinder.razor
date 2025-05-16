@@ -18,6 +18,24 @@
 else if (Results?.Any() == true)
 {
     <div class="mt-4">
+        @if (ToolInvocations?.Any() == true)
+        {
+           <div class="mb-3">
+                <strong>🔧 Tool Invocations</strong>
+                <a href="#" @onclick="ToggleTools" class="ms-2" style="font-size:0.9em;">
+                    @(ShowTools ? "Hide" : "Show")
+                </a>
+                @if (ShowTools)
+                {
+                    <ol class="list-group list-group-numbered mt-2">
+                        @foreach (var tool in ToolInvocations)
+                        {
+                            <li class="list-group-item">@tool</li>
+                        }
+                    </ol>
+                }
+            </div>
+        }
         @foreach (var home in Results)
         {
             <div class="card mb-3">
@@ -61,11 +79,19 @@ else if (Results is not null && !Results.Any())
     private bool IsLoading { get; set; }
     private string? ErrorMessage { get; set; }
     private List<HomeFinderApp.Models.HomeResult>? Results { get; set; }
+    private List<string>? ToolInvocations { get; set; }
+
+    private bool ShowTools { get; set; } = false;
+    private void ToggleTools()
+    {
+        ShowTools = !ShowTools;
+    }
 
     private async Task OnSearch()
     {
         ErrorMessage = null;
         Results = null;
+        ToolInvocations = null;
         if (string.IsNullOrWhiteSpace(Query))
         {
             ErrorMessage = "Please enter a search query.";
@@ -75,7 +101,9 @@ else if (Results is not null && !Results.Any())
         try
         {
             IsLoading = true;
-            Results = await HomeSearchService.LLMSearchWithTools(Query);
+            var (results, tools) = await HomeSearchService.LLMSearchWithTools(Query);
+            Results = results;
+            ToolInvocations = tools;
         }
         catch (Exception ex)
         {

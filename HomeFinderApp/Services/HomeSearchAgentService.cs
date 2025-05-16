@@ -29,7 +29,7 @@ namespace HomeFinderApp.Services
             this.logger = logger;
             this.functionLoggingFilter = functionLoggingFilter;
         }
-        public async Task<List<HomeResult>> LLMSearchWithTools(string query)
+        public async Task<(List<HomeResult> Results, List<string> ToolInvocations)> LLMSearchWithTools(string query)
         {
             ChatHistoryAgentThread agentThread = new();
             IKernelBuilder builder = Kernel.CreateBuilder();
@@ -39,6 +39,7 @@ namespace HomeFinderApp.Services
             kernel.ImportPluginFromObject(geoCodePlugin, "geocode_location");
             kernel.ImportPluginFromObject(extractPamatersPlugin, "extract_parameters");
             kernel.ImportPluginFromObject(elasticSearchPlugin, "query_elasticsearch");
+            functionLoggingFilter.ClearToolInvocations();
             kernel.FunctionInvocationFilters.Add(functionLoggingFilter);
             var instructionsPath = Path.Combine(AppContext.BaseDirectory, "Prompts", "HomeSearchAgentInstructions.txt");
             string instructions = await File.ReadAllTextAsync(instructionsPath);
@@ -57,15 +58,21 @@ namespace HomeFinderApp.Services
             {
                 responseMessages += response.Content;
             }
+            List<HomeResult> results;
             try
             {
-                return JsonSerializer.Deserialize<List<HomeResult>>(responseMessages!) ?? new List<HomeResult>();
+                results = JsonSerializer.Deserialize<List<HomeResult>>(responseMessages!) ?? new List<HomeResult>();
             }
             catch (JsonException)
             {
                 logger.LogError($"Failed to deserialize response: {responseMessages}");
-                return new List<HomeResult>();
+                results = new List<HomeResult>();
             }
+
+            // Retrieve the tool invocations from the filter
+            var toolInvocations = functionLoggingFilter.GetToolInvocations(); // You need to implement this method
+
+            return (results, toolInvocations);
         }
     }
 

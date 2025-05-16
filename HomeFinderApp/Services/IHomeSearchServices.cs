@@ -4,6 +4,6 @@ namespace HomeFinderApp.Services
 {
     public interface IHomeSearchService
     {
-        Task<List<HomeResult>> LLMSearchWithTools(string query);
+        Task<(List<HomeResult> Results, List<string> ToolInvocations)> LLMSearchWithTools(string query);
     }
 }

@@ -63,7 +63,8 @@ public class HomeSearchAgentServiceIntegrationTest
         string query = "2 bedroom house 50 miles from Orlando, FL with a pool";
 
         // Act
-        List<HomeResult> result = await service.LLMSearchWithTools(query);
+        var resultTuple = await service.LLMSearchWithTools(query);
+        var result = resultTuple.Results;
 
         // Assert
         Assert.IsNotNull(result, "Result should not be null");
@@ -77,7 +78,8 @@ public class HomeSearchAgentServiceIntegrationTest
         string query = "castle on the moon";
 
         // Act
-        List<HomeResult> result = await service.LLMSearchWithTools(query);
+        var resultTuple = await service.LLMSearchWithTools(query);
+        var result = resultTuple.Results;
 
         // Assert
         Assert.IsNotNull(result, "Result should not be null");
