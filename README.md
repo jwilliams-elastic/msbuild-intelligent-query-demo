@@ -13,3 +13,11 @@
 7. Streamlined notebook so that it can be run live
 8. Fixed search template and LLM prompts to support a wider range of natural language searches.
 9. Add semantic kernel and remove Code Assistants OpenAI calls. 
+
+## DEMO PROMPTS
+
+I'm looking for property near disney world florida with 3+ bedrooms and 2+ bathrooms and a pool and garage less than 500K
+
+I'm looking for property near disney world florida with 30 bedrooms and 20 bathrooms and a pool and garage less than 500K
+
+I'm looking for property near disney world florida with 30 bedrooms and 20 bathrooms, indoor pool, 4 car garage, boat slip, on beach less than 200K

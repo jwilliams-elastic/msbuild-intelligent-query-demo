@@ -63,9 +63,12 @@ namespace HomeFinderApp.Services
             {
                 results = JsonSerializer.Deserialize<List<HomeResult>>(responseMessages!) ?? new List<HomeResult>();
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
-                logger.LogError($"Failed to deserialize response: {responseMessages}");
+                // logger.LogError($"Failed to deserialize response: {responseMessages}");
+                // results = new List<HomeResult>();
+
+                logger.LogError(ex, "Failed to deserialize response: {ResponseMessages}", responseMessages);
                 results = new List<HomeResult>();
             }
 

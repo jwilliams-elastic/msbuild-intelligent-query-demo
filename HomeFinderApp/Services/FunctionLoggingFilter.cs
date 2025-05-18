@@ -31,6 +31,7 @@ namespace HomeFinderApp.Services
             return toolInvocations.ToList();
         }
 
+        // ...existing code...
         public async Task OnFunctionInvocationAsync(FunctionInvocationContext context, Func<FunctionInvocationContext, Task> next)
         {
             // Before execution
@@ -58,7 +59,7 @@ namespace HomeFinderApp.Services
                     var locationArg = context.Arguments.First().Value?.ToString();
                     if (!string.IsNullOrEmpty(locationArg))
                     {
-                        toolInvocations.Enqueue("Geocode: " + locationArg);
+                        toolInvocations.Enqueue("Azure Maps: " + locationArg);
                     }
                 }
             }
@@ -75,12 +76,14 @@ namespace HomeFinderApp.Services
                     }
                 }
             }
-            // Execute the function
+
+            // Measure execution time
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             await next(context);
+            stopwatch.Stop();
 
             // After execution
-            logger.LogInformation($"\n[FILTER] {context.Function.PluginName}.{context.Function.Name} completed. Result: {context.Result}");
+            logger.LogInformation($"\n[FILTER] {context.Function.PluginName}.{context.Function.Name} completed. Result: {context.Result} (Time: {stopwatch.ElapsedMilliseconds} ms)");
         }
     }
-
 }
