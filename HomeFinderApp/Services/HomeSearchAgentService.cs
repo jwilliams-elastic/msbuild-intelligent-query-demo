@@ -50,7 +50,12 @@ namespace HomeFinderApp.Services
                     Description = "An agent that helps users find homes based on user queries.",
                     Instructions = instructions,
                     Kernel = kernel,
-                    Arguments = new KernelArguments(new AzureOpenAIPromptExecutionSettings() { FunctionChoiceBehavior = FunctionChoiceBehavior.Auto() })
+                    Arguments = new KernelArguments(new AzureOpenAIPromptExecutionSettings()
+                    {
+                        FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+                        Temperature = 0f,
+                        MaxTokens = 2000
+                    })
                 };
             var message = new ChatMessageContent(AuthorRole.User, query);
             var responseMessages = string.Empty;

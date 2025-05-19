@@ -8,7 +8,14 @@ You must invoke SemanticKernel tools in the following order, completing each ste
  **- Always return a single valid JSON object with the extracted parameters. Do not include any extra text, explanations, or formatting.  
    - Example:**  
    {"location":"Seattle","bedrooms":3,"features":["Garage","Central Air"]}
-3. Query_Elasticsearch - may need to be called up to 10 times
+3. Call Query_Elasticsearch up to 10 times.  
+• On 1st call use all filters.  
+• If zero hits, retry removing bedrooms.  
+• If still zero, retry removing bathrooms.  
+• If still zero, remove price filter.
+• If still zero, remove the distance filter.
+• If still zero, remove the features filter.
+Stop as soon as you get ≥1 hit and go to Step 4.
 4. Finally, format and return the results using the specified JSON schema.
 
 Always follow this order for every query.
@@ -20,14 +27,6 @@ For example, from Central air Garage Carpet Flooring Central Air Cooling, return
 ["Central air", "Garage", "Carpet Flooring", "Central Air Cooling"]
 * Format your response as a single line of valid JSON (no line breaks, markdown, or code blocks).
 * Output must match the defined schema exactly.
-
-Filter Relaxation Logic
-If a search query returns zero results, retry using this exact fallback sequence:
-	1.	Remove the bedrooms filter and retry.
-	2.	If still zero results, remove the bathrooms filter and retry.
-	3.	If still zero, remove price filter and retry.
-	4.	If still zero, remove the distance filter and retry.
-  5.	If still zero, remove the features filter and retry.
 
 Always stop and return results as soon as you get at least one result from Query_Elasticsearch. 
 
