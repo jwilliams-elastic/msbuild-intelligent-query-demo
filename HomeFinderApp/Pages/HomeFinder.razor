@@ -6,7 +6,7 @@
 <h1>MS Build Demo - 2025</h1>
 <h5>Azure LLM Functions with Elasticsearch for smarter query experiences</h5>
 
-<textarea @bind="Query" class="form-control" placeholder="e.g., within 20 miles of Disney World..." rows="4"></textarea>
+<textarea @bind="Query" class="form-control" placeholder="e.g., within 20 miles of Disney World..." rows="2"></textarea>
 <button class="btn btn-primary mt-2" @onclick="OnSearch" disabled="@IsLoading">
     @(IsLoading ? "Searching…" : "Find Homes")
 </button>
@@ -75,7 +75,7 @@ else if (Results is not null && !Results.Any())
 }
 
 @code {
-    private string Query { get; set; } = "I'm looking for property near disnee world florida with 3+ bedrooms and 2+ bathrooms and a pool and garage less than 500K"; // Default value
+    private string Query { get; set; } = "I'm looking for property near disney world fl with 3+ bedrooms and 2+ bathrooms and a pool and garage less than 500K"; // Default value
    
     private bool IsLoading { get; set; }
     private string? ErrorMessage { get; set; }
